@@ -8,7 +8,7 @@
 
 #define WIRELESS_ACCESS_POINT_NAME "Smart Thermostat"
 #define WIRELESS_ACCESS_POINT_PASSWORD NULL // you can set password to connect to device using Wifi
-#define WIRELESS_DRD_TIMEOUT 4 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
+#define WIRELESS_DRD_TIMEOUT 10 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
 #define WIRELESS_DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
 
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
