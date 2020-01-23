@@ -1,15 +1,16 @@
 class Threaded
 {
 
-  int interval;
+  long interval;
   unsigned long previousTime;
  
 public:
 
-  Threaded(int interval)
+  Threaded() : Threaded(0) { }
+
+  Threaded(long interval) : previousTime(0)
   {
     this->interval = interval;
-    this->previousTime = 0;
   }
 
   virtual void setup()
@@ -22,7 +23,7 @@ public:
     
     unsigned long currentTime = millis();
     
-    if (currentTime - this->previousTime >= this->interval)
+    if (this->interval > 0 && currentTime - this->previousTime >= this->interval)
     {
       this->previousTime = currentTime;
       this->update();

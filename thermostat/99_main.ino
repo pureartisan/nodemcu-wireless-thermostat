@@ -6,13 +6,17 @@
 #define LCD_COLS 16
 #define LCD_ROWS 2
 
-
+#define WIRELESS_ACCESS_POINT_NAME "WirelessThermoState"
+#define WIRELESS_ACCESS_POINT_PASSWORD NULL // you can set password to connect to device using Wifi
+#define WIRELESS_DRD_TIMEOUT 2 // Number of seconds after reset during which a subseqent reset will be considered a double reset.
+#define WIRELESS_DRD_ADDRESS 0 // RTC Memory Address for the DoubleResetDetector to use
 
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
 Sensor sensor(SENSOR_PIN, SENSOR_TYPE, SENSOR_INTERVAL, &lcd);
+Wireless wireless(WIRELESS_ACCESS_POINT_NAME, WIRELESS_ACCESS_POINT_PASSWORD, WIRELESS_DRD_TIMEOUT, WIRELESS_DRD_ADDRESS);
 
 void setup() {
-//  Serial.begin(9600);
+  Serial.begin(9600);
   
   // initialize LCD
   lcd.init();                   
@@ -23,10 +27,10 @@ void setup() {
   lcd.print("Loading...");
 
   sensor.setup();
+  wireless.setup();
 }
 
 void loop() {
-  
   sensor.loop();
-  
+  wireless.loop();
 }
