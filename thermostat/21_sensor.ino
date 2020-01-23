@@ -33,15 +33,15 @@ protected:
     }
     
     this->lcd->setCursor(0, 0);
-    this->lcd->print("Temp. :");
-    this->lcd->setCursor(7, 0);
+    this->lcd->print("Temp. : ");
+    this->lcd->setCursor(8, 0);
     this->lcd->print(t);
     this->lcd->setCursor(12, 0);
     this->lcd->print(" C");
     
     this->lcd->setCursor(0, 1);
-    this->lcd->print("Humi. :");
-    this->lcd->setCursor(7, 1);
+    this->lcd->print("Humi. : ");
+    this->lcd->setCursor(8, 1);
     this->lcd->print(h);
     this->lcd->setCursor(12, 1);
     this->lcd->print(" %");
