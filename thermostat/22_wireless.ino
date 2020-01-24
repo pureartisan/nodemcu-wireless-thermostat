@@ -4,6 +4,8 @@
 #define MAX_MQTT_SERVER_LENGTH 40
 #define MAX_MQTT_PORT_LENGTH 6
 
+#define EMPTY_STRING_CHAR '\0'
+
 #define CONFIG_FILE "/config.json"
 
 // Our configuration structure.
@@ -28,28 +30,34 @@ class Wireless: public Threaded
   const char *apPassword;
 
   DoubleResetDetector *drd;
+  LiquidCrystal_I2C *lcd;
 
   void (*saveConfigCallback)(void);
 
 public:
 
-  Wireless(char const *accessPointName, char const *accessPointPassword, int drd_timeout, int drd_address, void (*saveConfigCallback)(void))
+  Wireless(char const *accessPointName, char const *accessPointPassword, int drd_timeout, int drd_address, LiquidCrystal_I2C *lcd, void (*saveConfigCallback)(void))
     : Threaded()
   {
     this->apName = accessPointName;
     this->apPassword = accessPointPassword;
-    
+
+    this->lcd = lcd;
     this->saveConfigCallback = saveConfigCallback;
 
     this->drd = new DoubleResetDetector(drd_timeout, drd_address);
 
     this->shouldSaveConfig = false;
+
+    this->config.mqtt_server[0] = EMPTY_STRING_CHAR;
+    this->config.mqtt_port[0] = EMPTY_STRING_CHAR;
   }
  
   virtual void setup()
   {
+    
+    Serial.println("Wireless setup starting...");
 
-    this->waitForFileSystem();
     this->loadConfigFromFileSystem();
     
     WiFiManager wifiManager;
@@ -63,10 +71,13 @@ public:
     wifiManager.addParameter(&custom_mqtt_server);
     wifiManager.addParameter(&custom_mqtt_port);
 
+    // force setup?
     if (this->drd->detectDoubleReset()) {
-      Serial.println("Starting Access Point - Config Portal");
+      Serial.println("Starting setup mode");
+      this->displaySetupMode();
       wifiManager.startConfigPortal(this->apName, this->apPassword);
     } else {
+      Serial.println("Auto connect");
       wifiManager.autoConnect(this->apName, this->apPassword);
     }
 
@@ -78,6 +89,8 @@ public:
       this->saveConfigToFileSystem();
     }
     
+    Serial.println("Wireless setup done!");
+    
   }
 
   virtual void loop()
@@ -88,26 +101,17 @@ public:
   
   void configUpdated()
   {
+    Serial.println("Config updated, we need to save it");
     this->shouldSaveConfig = true;
   }
 
 private:
 
-  void waitForFileSystem()
+  void displaySetupMode()
   {
-    const int chipSelect = 4;
-    while (!SD.begin(chipSelect)) {
-      Serial.println(F("Failed to initialize SD library"));
-      delay(1000);
-    }
-  }
-
-  void debugPrintWifiInfo()
-  {
-    Serial.println("local ip");
-    Serial.println(WiFi.localIP());
-    Serial.println(WiFi.gatewayIP());
-    Serial.println(WiFi.subnetMask());
+      this->lcd->clear();
+      this->lcd->setCursor(0, 0);
+      this->lcd->print("(Setup Mode)");
   }
 
   boolean loadConfigFromFileSystem()
@@ -116,7 +120,7 @@ private:
     Serial.println("reading config file...");
     
     // Open file for reading
-    File file = SD.open(CONFIG_FILE);
+    File file = SPIFFS.open(CONFIG_FILE, "r");
   
     // Allocate a temporary JsonDocument
     StaticJsonDocument<MAX_JSON_OBJECT_SIZE> doc;
@@ -150,10 +154,10 @@ private:
     Serial.println("saving config");
     
     // Delete existing file, otherwise the configuration is appended to the file
-    SD.remove(CONFIG_FILE);
+    SPIFFS.remove(CONFIG_FILE);
   
     // Open file for writing
-    File file = SD.open(CONFIG_FILE, FILE_WRITE);
+    File file = SPIFFS.open(CONFIG_FILE, "w");
     if (!file) {
       Serial.println(F("Failed to create file"));
       return false;

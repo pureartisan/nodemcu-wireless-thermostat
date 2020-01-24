@@ -20,13 +20,18 @@ void saveConfigCallback() {
 
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
 Sensor sensor(SENSOR_PIN, SENSOR_TYPE, SENSOR_INTERVAL, &lcd);
-Wireless wireless(WIRELESS_ACCESS_POINT_NAME, WIRELESS_ACCESS_POINT_PASSWORD, WIRELESS_DRD_TIMEOUT, WIRELESS_DRD_ADDRESS, &saveConfigCallback);
+Wireless wireless(WIRELESS_ACCESS_POINT_NAME, WIRELESS_ACCESS_POINT_PASSWORD, WIRELESS_DRD_TIMEOUT, WIRELESS_DRD_ADDRESS, &lcd, &saveConfigCallback);
 
 void setup() {
 
   // init serial
   Serial.begin(9600);
   while (!Serial) continue;
+  
+  // show splash in serial
+  Serial.println("\n-----------");
+  Serial.println(WIRELESS_ACCESS_POINT_NAME);
+  Serial.println("-----------");
 
   // update reference
   wirelessRef = &wireless;
@@ -39,11 +44,11 @@ void setup() {
   lcd.setCursor(0, 0);
   lcd.print("Loading...");
 
-  sensor.setup();
   wireless.setup();
+  sensor.setup();
 }
 
 void loop() {
-  sensor.loop();
   wireless.loop();
+  sensor.loop();
 }

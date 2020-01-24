@@ -15,7 +15,13 @@ public:
  
   virtual void setup()
   {
+    
+    Serial.println("Sensor setup starting...");
+    
     this->dht->begin();
+    
+    Serial.println("Sensor setup done!");
+
   }
 
 protected:
@@ -29,7 +35,7 @@ protected:
     if (isnan(h) || isnan(t)) {
       this->lcd->clear();
       this->lcd->setCursor(0, 0);
-      this->lcd->print("Devices not connected");
+      this->lcd->print("Sensors not connected");
     }
     
     this->lcd->setCursor(0, 0);
