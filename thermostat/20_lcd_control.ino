@@ -51,6 +51,7 @@ public:
 
     // since the pin is pull-up, it's HIGH when not pressed
     if (pinStatus == LOW) {
+      Serial.println("Display activated");
       this->activate();
     }
   }
