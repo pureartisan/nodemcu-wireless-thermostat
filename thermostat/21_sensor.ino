@@ -16,15 +16,19 @@ class Sensor: public Threaded
 
   boolean mqttConnected;
   char mqttBuffer[MQTT_BUFFER_SIZE];
+  long mqttInterval;
+  unsigned long previousMqtt;
   
 public:
 
-  Sensor(uint8_t pin, uint8_t type, long interval, LiquidCrystal_I2C *lcd)
+  Sensor(uint8_t pin, uint8_t type, long interval, long mqttInterval, LiquidCrystal_I2C *lcd)
     : Threaded(interval)
   {
     this->lcd = lcd;
     this->dht = new DHT(pin, type);
 
+    this->mqttInterval = mqttInterval;
+    this->previousMqtt = 0;
     this->config = 0;
     this->mqttConnected = false;
     this->mqttBuffer[0] = EMPTY_STRING_CHAR;
@@ -39,7 +43,7 @@ public:
     
     this->dht->begin();
 
-    if (!this->isReadyToSendData()) {
+    if (this->isReadyToSendData()) {
       this->mqttConnected = this->connectToMqttBroker();
     }
     
@@ -81,7 +85,7 @@ protected:
     this->lcd->setCursor(12, 1);
     this->lcd->print(" %");
 
-    // send data
+    // send data    
     if (this->mqttConnected && this->isReadyToSendData()) {
       this->sendDataToMqttBroker(t, h);
     }
@@ -102,7 +106,7 @@ private:
 
   boolean isWifiConnected()
   {
-    return WiFi.status() != WL_CONNECTED;
+    return WiFi.status() == WL_CONNECTED;
   }
 
   boolean initialiseMqttServerDetails()
@@ -153,8 +157,25 @@ private:
 
   boolean sendDataToMqttBroker(float temp, float humidity)
   {
-    this->mqttClient->publish(MQTT_TOPIC_TEMPERATURE, this->floatToStr(temp));
-    this->mqttClient->publish(MQTT_TOPIC_HUMIDITY, this->floatToStr(humidity));
+
+    unsigned long currentTime = millis();
+    
+    if (this->mqttInterval > 0 && currentTime - this->previousMqtt >= this->mqttInterval)
+    {
+      
+      this->previousMqtt = currentTime;
+        
+      Serial.println("Sending data via MQTT");
+      Serial.print("\nTemp: ");
+      Serial.print(this->floatToStr(temp));
+      Serial.print("\nHumidity: ");
+      Serial.print(this->floatToStr(humidity));
+      Serial.println("");
+      
+      this->mqttClient->publish(MQTT_TOPIC_TEMPERATURE, this->floatToStr(temp));
+      this->mqttClient->publish(MQTT_TOPIC_HUMIDITY, this->floatToStr(humidity));
+
+    }
   }
 
   char* floatToStr(float num)

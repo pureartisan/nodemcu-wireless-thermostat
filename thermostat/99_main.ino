@@ -1,6 +1,7 @@
 #define SENSOR_PIN D3
 #define SENSOR_TYPE DHT22
 #define SENSOR_INTERVAL 1000
+#define SENSOR_MQTT_INTERVAL 5000
 
 #define LCD_ADDR 0x27
 #define LCD_COLS 16
@@ -19,7 +20,7 @@ void saveConfigCallback() {
 }
 
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_COLS, LCD_ROWS);
-Sensor sensor(SENSOR_PIN, SENSOR_TYPE, SENSOR_INTERVAL, &lcd);
+Sensor sensor(SENSOR_PIN, SENSOR_TYPE, SENSOR_INTERVAL, SENSOR_MQTT_INTERVAL, &lcd);
 Wireless wireless(WIRELESS_ACCESS_POINT_NAME, WIRELESS_ACCESS_POINT_PASSWORD, WIRELESS_DRD_TIMEOUT, WIRELESS_DRD_ADDRESS, &lcd, &saveConfigCallback);
 
 void setup() {
