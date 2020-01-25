@@ -1,35 +1,31 @@
-#define MQTT_CLIENT_NAME "ESP8266Client"
-#define MQTT_BUFFER_SIZE 10
-
-#define MQTT_TOPIC_TEMPERATURE "sensor/temperature"
-#define MQTT_TOPIC_HUMIDITY "sensor/humidity"
-
 class Sensor: public Threaded
 {
 
   DHT *dht;
-  LiquidCrystal_I2C *lcd;
-  Config *config;
+  LcdControl *lcd;
+  
+  char textBuffer[DISPLAY_TEXT_BUFFER_SIZE];
 
   WiFiClient espClient;
   PubSubClient *mqttClient;
+  Wireless *wireless;
 
   boolean mqttConnected;
-  char mqttBuffer[MQTT_BUFFER_SIZE];
+  char mqttBuffer[MQTT_DATA_BUFFER_SIZE];
   long mqttInterval;
   unsigned long previousMqtt;
   
 public:
 
-  Sensor(uint8_t pin, uint8_t type, long interval, long mqttInterval, LiquidCrystal_I2C *lcd)
+  Sensor(uint8_t pin, uint8_t type, long interval, long mqttInterval, LcdControl *lcd, Wireless *wireless)
     : Threaded(interval)
   {
     this->lcd = lcd;
+    this->wireless = wireless;
     this->dht = new DHT(pin, type);
 
     this->mqttInterval = mqttInterval;
     this->previousMqtt = 0;
-    this->config = 0;
     this->mqttConnected = false;
     this->mqttBuffer[0] = EMPTY_STRING_CHAR;
 
@@ -51,11 +47,6 @@ public:
 
   }
 
-  void setConfig(Config *config)
-  {
-    this->config = config; 
-  }
-
 protected:
 
   virtual void update()
@@ -66,25 +57,17 @@ protected:
   
     if (isnan(h) || isnan(t)) {
       this->lcd->clear();
-      this->lcd->setCursor(0, 0);
-      this->lcd->print("Sensors not connected");
+      this->lcd->writeLine(0, "ERROR: Sensors");
+      this->lcd->writeLine(1, "not connected!!");
       return;
     }
-    
-    this->lcd->setCursor(0, 0);
-    this->lcd->print("Temp. : ");
-    this->lcd->setCursor(8, 0);
-    this->lcd->print(t);
-    this->lcd->setCursor(12, 0);
-    this->lcd->print(" C");
-    
-    this->lcd->setCursor(0, 1);
-    this->lcd->print("Humi. : ");
-    this->lcd->setCursor(8, 1);
-    this->lcd->print(h);
-    this->lcd->setCursor(12, 1);
-    this->lcd->print(" %");
 
+    sprintf(this->textBuffer, "Temp. : %.2f C", t);
+    this->lcd->writeLine(0, this->textBuffer);
+
+    sprintf(this->textBuffer, "Humi. : %.2f %%", h);
+    this->lcd->writeLine(1, this->textBuffer);
+    
     // send data    
     if (this->mqttConnected && this->isReadyToSendData()) {
       this->sendDataToMqttBroker(t, h);
@@ -96,17 +79,12 @@ private:
 
   boolean isReadyToSendData()
   {
-    return this->isValidConfig() && this->isWifiConnected();
+    return this->isValidConfig() && this->wireless->isWifiConnected();
   }
 
-  boolean isValidConfig()
-  {
-    return (this->config != 0) && (this->config->mqtt_server[0] != EMPTY_STRING_CHAR);
-  }
-
-  boolean isWifiConnected()
-  {
-    return WiFi.status() == WL_CONNECTED;
+  boolean isValidConfig() {
+    Config *config = this->wireless->getConfig();
+    return strlen(config->mqtt_server) > 0;
   }
 
   boolean initialiseMqttServerDetails()
@@ -114,8 +92,10 @@ private:
 
     Serial.println("Initialising MQTT Server details...");
 
-    const char* mqttServer = this->config->mqtt_server;
-    const char* mqttPort = this->config->mqtt_port;
+    Config *config = this->wireless->getConfig();
+
+    const char* mqttServer = config->mqtt_server;
+    const char* mqttPort = config->mqtt_port;
 
     int port = (new String(mqttPort))->toInt();
     

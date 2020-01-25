@@ -1,8 +1,3 @@
-// http://arduinojson.org/assistant to compute the capacity
-#define MAX_JSON_OBJECT_SIZE 256
-
-#define CONFIG_FILE "/config.json"
-
 class Wireless: public Threaded
 {
   
@@ -13,13 +8,13 @@ class Wireless: public Threaded
   const char *apPassword;
 
   DoubleResetDetector *drd;
-  LiquidCrystal_I2C *lcd;
+  LcdControl *lcd;
 
   void (*saveConfigCallback)(void);
 
 public:
 
-  Wireless(char const *accessPointName, char const *accessPointPassword, int drd_timeout, int drd_address, LiquidCrystal_I2C *lcd, void (*saveConfigCallback)(void))
+  Wireless(char const *accessPointName, char const *accessPointPassword, int drd_timeout, int drd_address, LcdControl *lcd, void (*saveConfigCallback)(void))
     : Threaded()
   {
     this->apName = accessPointName;
@@ -47,6 +42,10 @@ public:
 
     // listen to the user updating config files
     wifiManager.setSaveConfigCallback(this->saveConfigCallback);
+
+    // test
+    strcpy(this->config.mqtt_server, "192.168.178.220");
+    strcpy(this->config.mqtt_port, "1883");
 
     // setup custom params to capture
     WiFiManagerParameter custom_mqtt_server("mqtt_server", "MQTT Server", this->config.mqtt_server, MAX_MQTT_SERVER_LENGTH);
@@ -96,14 +95,18 @@ public:
   {
     return &(this->config); 
   }
+  
+  boolean isWifiConnected()
+  {
+    return WiFi.status() == WL_CONNECTED;
+  }
 
 private:
 
   void displaySetupMode()
   {
       this->lcd->clear();
-      this->lcd->setCursor(0, 0);
-      this->lcd->print("  [Setup Mode]  ");
+      this->lcd->writeLine(0, "  [Setup Mode]  ");
   }
 
   boolean loadConfigFromFileSystem()

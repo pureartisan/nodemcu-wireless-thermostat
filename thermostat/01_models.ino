@@ -1,6 +1,3 @@
-#define MAX_MQTT_SERVER_LENGTH 40
-#define MAX_MQTT_PORT_LENGTH 6
-
 // Our configuration structure.
 //
 // Never use a JsonDocument to store the configuration!
