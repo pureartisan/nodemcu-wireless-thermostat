@@ -1,0 +1,1 @@
+#define EMPTY_STRING_CHAR '\0'

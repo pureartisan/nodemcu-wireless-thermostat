@@ -1,24 +1,7 @@
-// arduinojson.org/assistant to compute the capacity
+// http://arduinojson.org/assistant to compute the capacity
 #define MAX_JSON_OBJECT_SIZE 256
 
-#define MAX_MQTT_SERVER_LENGTH 40
-#define MAX_MQTT_PORT_LENGTH 6
-
-#define EMPTY_STRING_CHAR '\0'
-
 #define CONFIG_FILE "/config.json"
-
-// Our configuration structure.
-//
-// Never use a JsonDocument to store the configuration!
-// A JsonDocument is *not* a permanent storage; it's only a temporary storage
-// used during the serialization phase. See:
-// https://arduinojson.org/v6/faq/why-must-i-create-a-separate-config-object/
-struct Config {
-  char mqtt_server[MAX_MQTT_SERVER_LENGTH];
-  char mqtt_port[MAX_MQTT_PORT_LENGTH];
-};
-
 
 class Wireless: public Threaded
 {
@@ -76,6 +59,10 @@ public:
       Serial.println("Starting setup mode");
       this->displaySetupMode();
       wifiManager.startConfigPortal(this->apName, this->apPassword);
+
+      Serial.println("IP Address:");
+      Serial.println(WiFi.localIP());
+      
     } else {
       Serial.println("Auto connect");
       wifiManager.autoConnect(this->apName, this->apPassword);
@@ -105,13 +92,18 @@ public:
     this->shouldSaveConfig = true;
   }
 
+  Config* getConfig()
+  {
+    return &(this->config); 
+  }
+
 private:
 
   void displaySetupMode()
   {
       this->lcd->clear();
       this->lcd->setCursor(0, 0);
-      this->lcd->print("(Setup Mode)");
+      this->lcd->print("  [Setup Mode]  ");
   }
 
   boolean loadConfigFromFileSystem()

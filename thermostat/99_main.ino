@@ -42,10 +42,16 @@ void setup() {
   
   // loading
   lcd.setCursor(0, 0);
-  lcd.print("Loading...");
+  lcd.print("   Loading...   ");
 
   wireless.setup();
+
+  // use config
+  Config *config = wireless.getConfig();
+  sensor.setConfig(config);
+  
   sensor.setup();
+  
 }
 
 void loop() {
