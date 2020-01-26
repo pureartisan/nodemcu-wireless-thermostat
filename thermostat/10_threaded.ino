@@ -23,7 +23,7 @@ public:
     
     unsigned long currentTime = millis();
     
-    if (this->interval > 0 && currentTime - this->previousTime >= this->interval)
+    if (this->interval > 0 && (currentTime - this->previousTime) >= this->interval)
     {
       this->previousTime = currentTime;
       this->update();
@@ -36,6 +36,11 @@ protected:
   virtual void update()
   {
     // do nothing
+  }
+
+  void resetLoopInterval()
+  {
+    this->previousTime = millis();
   }
 
 };
