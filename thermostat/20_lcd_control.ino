@@ -81,9 +81,11 @@ public:
   }
   
   void writeLine(int row, const char* text)
-  {    
-    this->lcd->setCursor(0, row);
-    this->lcd->print(text);
+  {
+    if (this->isActive) {
+      this->lcd->setCursor(0, row);
+      this->lcd->print(text);
+    }
   }
 
   void setPowerSaving(boolean powerSaving)
